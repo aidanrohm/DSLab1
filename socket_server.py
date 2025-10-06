@@ -6,10 +6,10 @@ import socket
 import threading
 
 # Listening on the internal ip of node0 which will be used as the server itself
-ip_port = ('127.0.0.1', 9999)
+ip_port = ('10.128.0.2', 9999)
 
 # Socket.SOCK_STREAM is tcp
-sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 sk.bind(ip_port)
 
@@ -24,9 +24,9 @@ lock = threading.Lock() # Used to synchronize access to shared data
 def handle_client(conn, client_id):
     conn.sendall(f"Your ID is {client_id}".encode()) # Used to communicate to the client what their id number is
     while True:
-        try: 
+        try:
             data = conn.recv(1024).decode().strip()
-            
+
             if not data:
                 continue
 
@@ -59,7 +59,7 @@ def handle_client(conn, client_id):
                         key = tuple(sorted((client_id, target_id)))
                         histories.setdefault(key, []).append(full_msg)
                         conn.sendall(f"Message forwarded to {target_id}".encode())
-                
+
                     else: # Error Message
                         conn.sendall(f"Client {target_id} not found!".encode())
 
@@ -74,7 +74,7 @@ def handle_client(conn, client_id):
                 key = tuple(sorted((client_id, target_id)))
                 with lock:
                     history = histories.get(key, [])
-                if history: 
+                if history:
                     conn.sendall("\n".join(history).encode())
                 else:
                     conn.sendall("No history!".encode())
@@ -94,7 +94,8 @@ def handle_client(conn, client_id):
 
     # Cleans and deletes the connection after useage is over
     with lock:
-        del clients[client_id]
+        if client_id in clients:
+            del clients[client_id]
 
     conn.close()
     print(f"Client {client_id} disconntected!")
