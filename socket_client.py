@@ -1,4 +1,7 @@
 # -*- coding:utf-8 -*-
+# Aidan Rohm CISC 5597 Lab 1 Assignment
+# Oct 6, 2025
+
 import socket
 import threading
 import sys
