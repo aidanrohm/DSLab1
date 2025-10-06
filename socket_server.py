@@ -18,7 +18,7 @@ print('start socket server，waiting client...')
 
 clients = {} # Used to map the client_id to the socket
 histories = {} # Maps the id used to a history of messages
-client_id_count = 1 # Keeps track of the number of clients (for this case there are 2 clients)
+client_id_counter = 1 # Keeps track of the number of clients (for this case there are 2 clients)
 lock = threading.Lock() # Used to synchronize access to shared data
 
 def handle_client(conn, client_id):
