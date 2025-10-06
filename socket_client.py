@@ -11,6 +11,9 @@ ip_port = ('10.128.0.2', 9999)  # server IP on node0
 s = socket.socket()
 s.connect(ip_port)
 
+# Event to signal the main thread to stop when server says Goodbye
+stop_event = threading.Event()
+
 # Get assigned ID from server
 client_id = s.recv(1024).decode()
 print(client_id)
@@ -25,16 +28,23 @@ def listen_for_messages(sock):
             msg = sock.recv(4096).decode()
             if not msg:
                 break
+
+            if msg.strip() == "Goodbye!":
+                print("\n[Server] Goodbye!")
+                stop_event.set()  # Signal the main thread to exit
+                break
+
             print("\n[Server] " + msg)
-            print("Enter command: ", end="", flush=True)  # re-prompt
+            print("Enter command: ", end="", flush=True)
         except:
             break
 
 # Using a thread to listen for messages, this allows the client to immediately display a message
-threading.Thread(target=listen_for_messages, args=(s,), daemon=True).start()
+listener_thread = threading.Thread(target=listen_for_messages, args=(s,), daemon=True)
+listener_thread.start()
 
 # Main loop for sending commands
-while True:
+while not stop_event.is_set():
     try:
         # Standard user input to communicate over the connection
         inp = input("Enter command: ").strip()
@@ -42,11 +52,18 @@ while True:
             continue
         s.sendall(inp.encode())
 
-        if inp == "exit":
+        # If user types exit manually, also set the stop_event to clean up
+        if inp.lower() == "exit":
+            stop_event.set()
             break
+
     except (KeyboardInterrupt, EOFError):
         print("\nExiting client...")
         s.sendall("exit".encode())
+        stop_event.set()
         break
+
+# Wait a short moment for the listener to print "Goodbye!" if it hasn't yet
+listener_thread.join(timeout=0.5)
 
 s.close()
